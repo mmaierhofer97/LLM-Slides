@@ -85,7 +85,7 @@
 
 \title[LLM]{Lifetime Limited Memory} % The short title appears at the bottom of every slide, the full title is only on the title page
 
-\author{Grant Baker, Matt Maierhofer} % Your name
+\author{J. Matt Maierhofer} % Your name
 \institute[CU] % Your institution as it will appear on the bottom of every slide, may be shorthand to save space
 {
 University of Colorado \\ % Your institution for the title page
@@ -110,164 +110,96 @@ University of Colorado \\ % Your institution for the title page
 %----------------------------------------------------------------------------------------
 
 %------------------------------------------------
-\section{Support Vector Clustering} % Sections can be created in order to organize your presentation into discrete blocks, all sections and subsections are automatically printed in the table of contents as an overview of the talk
+\section{Introduction} % Sections can be created in order to organize your presentation into discrete blocks, all sections and subsections are automatically printed in the table of contents as an overview of the talk
 %------------------------------------------------
 
 %\subsection{Subsection Example} % A subsection can be created just before a set of slides with a common theme to further break down your presentation into chunks
 
 \begin{frame}
-\frametitle{Support Vector Clustering}
+\frametitle{Motivation}
 \begin{itemize}
-\item Introduced by Ben-Hur et al. \cite{SVC}
-\item Projects data to infinite dimensional space
-\item Finds the smallest bounding hypersphere on the data, allowing penalized outliers
-\item Sphere is projected back to the data space, forming clusters on the data
+\item Event sequence data finds itself in many modern problems
+\begin{itemize}
+    \item Shopping History
+    \item Call Logs
+    \item User Behavior
+\end{itemize}
+\item Temporal aspect of data not specifically addressed by LSTM's structure
+\item Event Sequences occur at variety of timescales with varying levels of memory decay
 \end{itemize}
 \end{frame}
 
-%------------------------------------------------
-
-\begin{frame}
-\frametitle{The Primal Problem}
-\begin{align} \label{P1}
-    \min_{R,a,\xi} \textit{ } &R^2 + C\sum_{j} \xi_j\nonumber \\
-    &||\phi(X_i) - a||^2\leq R^2 + \xi_i\nonumber\\
-    &\xi_i \geq 0 \textit{ }\nonumber\\~ \nonumber\\
-    &X\in \mathbb{R}^{m\times n}\nonumber, \;\xi \in \mathbb{R}^n
-\end{align}
-
+\begin{frame}{Event Sequence Data}
+    \begin{figure}
+    \centering
+    \includegraphics[width=0.6\textwidth]{figures/Event_Sequence.png}
+    \caption{Event Sequence Data}
+    \label{fig:Event_seq}
+    An example of an event sequence with 4 different event types
+    
+\end{figure}
 \end{frame}
-\begin{frame}{The Lagrangian}
-    \begin{align*}
-    \mathcal{L}(R,a,\xi,\beta,\mu) =& R^2 + C\sum_{j=1}^n \xi_j  \\&-\sum_{j=1}^n\beta_j( R^2 + \xi_j-||\phi(X_j) - a||^2) - \sum_{j=1}^n \xi_j  \mu_j
-\end{align*}
-\end{frame}
-\begin{frame}{KKT Conditions - Stationarity}
-    \begin{align*}
-    &\nabla \mathcal{L}=0  \\\underline{\hspace{1cm}}&\underline{\hspace{3cm}}\\
-    &\sum_{j=1}^n \beta_j = 1
-    \\ &a = \sum_{j=1}^n \beta_j \phi(X_j)
-    \\ &\beta_j = C - \mu_j
-\end{align*}
-\end{frame}
-\begin{frame}{KKT Conditions - Complementary Slackness}
-    \begin{align*}
-    \beta_j( R^2 + \xi_j-||\phi(X_j) - a||^2) &= 0\nonumber\\
-    \xi_j  \mu_j &= 0
-\end{align*}
-\end{frame}
-
-\begin{frame}{The Dual Problem}
-    \begin{align*}
-    \max_{\mu,\beta,R,a,\xi} \mathcal{L}(R,a,\xi,\beta,\mu) \\
-    \nabla_{R,a,\xi}\mathcal{L}= 0 \nonumber
-\end{align*}
-\end{frame}
-
-\begin{frame}{Using Stationarity}
-    Let $\hat{L}(\beta) = \mathcal{L}$ under our stationarity conditions.
-
-\begin{align*}
-    \hat{L}(\beta)&= R^2 + C\sum_{j} \xi_j - \sum_j\beta_j( R^2 + \xi_j-||\phi(X_j) - a||^2) - \sum_{j} \xi_j  \mu_j \nonumber\\
-    &= R^2 (1-\sum_j\beta_j) + \sum_{j} \xi_j(C-\beta_j-\mu_j) + \sum_j\beta_j(||\phi(X_j) - a||^2)\nonumber\\
-    &=\sum_j\beta_j||\phi(X_j)- a||^2 \nonumber\\
-    &=\sum_j \beta_j(||\phi(X_j)||^2 - 2 a \cdot \phi(X_j) + ||a||^2)\nonumber\\
-    &= \sum_j \beta_j\Big(||\phi(X_j)||^2 - 2 \sum_i\beta_i\phi(X_i) \cdot \phi(X_j)\Big) + ||\sum_i\beta_i\phi(X_i)||^2 \nonumber\\
-    & = \sum_j\beta_j \phi(X_j)\cdot \phi(X_j)  - \sum_{i,j}\beta_i\beta_j \phi(X_i)\cdot \phi(X_j) 
-\end{align*}
-\end{frame}
-\begin{frame}{What is $\phi$?}
+\begin{frame}{Neural Networks}
     \begin{itemize}
-        \item $\phi(x)$ maps $x$ from an $n$-dimensional data space to an infinite dimensional feature space
-        \item We don't actually ever compute $\phi(x)$, instead we use the ``Kernel Trick''
-        \item Define $K(x_1,x_2) = \phi(x_1)\cdot \phi(x_2)= e^{-q||x_1-x_2||_2^2}$
-        \item Note $K(x,x) = 1$
+        \item In the vanilla case, sequence of linear operations followed by activation functions
+        \item Parameters of the linear operations are allowed to vary
+        \item It has been shown that a single layer neural network is capable of approximating any discrimination task/function given a large enough finite number of neurons (although provides no guarantee about the ability to learn the parameters given an algorithm)\cite{app}
+        \item Parameters learned via gradient descent type algorithms
     \end{itemize}
 \end{frame}
-\begin{frame}{The Dual - Reworked}
-    \begin{equation*}
-    \label{eq:dual}
-    \max_{\beta\geq 0} \left(1 - \sum_{i,j}\beta_i\beta_j K(X_i,X_j)\right)
-\end{equation*}
+\begin{frame}{Neural Network Diagram}
+    \begin{figure}
+    \centering
+\includegraphics[width=0.8\textwidth]{figures/NN.png}
+    \caption{Neural Network}
+    \label{fig:NN}
+    Diagram of a vanilla neural network
+\end{figure}
 \end{frame}
-\begin{frame}{Defining the Radius}
-Note that if $0<\beta_j<C$, $\phi(X_j)$ is on the surface of the hypersphere, and we define \[R^2(x)=||\phi(x)-a||^2=K(x,x) - 2 \sum_j \beta_j K(x,X_j)+\sum_{i,j}\beta_i \beta_j K(X_i,X_j)\]as the distance from the center of the sphere, $R = R(X_j)$ is the radius of our hypersphere.
-\end{frame}
-\begin{frame}{Clustering}
-Finally, we build an adjacency matrix for the points. Two points, $(X_i,X_j)$, are considered adjacent if the line between them in the data space is within the hypersphere in the feature space, or \[R(x) \leq R \;\;\forall x\in\{X_i + t(X_j-X_i)|t\in[0,1]\}\]
-In practice, we sample points on the line to check. After we build the adjacency matrix, clusters of points are determined via a breadth first search of the matrix. 
-\end{frame}
-\section{Fast Support Vector Clustering}
-\begin{frame}{Speeding Up the Adjacency Matrix}
-    \begin{itemize}
-        \item Computing the Adjacency Matrix can be very costly, $O(mn^3)$, want to reduce overall cost
-        \item Ideally want to find a subset of ``important'' points and cluster using these
-        \item Fast Support Vector Clustering\cite{Pham2017}, introduced by Pham et al., helps solve this
-    \end{itemize}
-\end{frame}
-\begin{frame}{Fast Support Vector Clustering}
+\begin{frame}{Recurrent Neural Networks}
 \begin{itemize}
-    \item First, take the set of all points within $\epsilon$ of the boundary. This should give a solid representation of the boundary
-    \item Next, we use a fixed point iterator to push our points to an equilibrium at a local optima of our radius function. \[x_{k+1} = \frac{\sum_j \beta_j e^{-q||X_j - x_k||^2} X_j}{\sum_j \beta_j e^{-q||X_j - x_k||^2}}\]
-    \item We then cluster these ``equilibrium points'' using the adjacency matrix method
-    \item The boundary points are assigned to the same cluster as the corresponding equilibrium points, and the other points are assigned to the same cluster as the closest boundary point in the data space.
+    \item Introduces notion of memory to neural network
+    \item Formulated to work on sequences of data
+    \item In vanilla case, passes previous output of network into next input
+    \item Doesn't include ability to pass on long term memory in vanilla 
 \end{itemize}
+    
 \end{frame}
-\section{Scalable Support Vector Clustering}
-\begin{frame}{Speeding Up the Training Process}
-    \begin{itemize}
-        \item Scalable Support Vector Clustering, Pham et al. \cite{ssvc}
-        \item Instead of solving a quadratic program, we fit the primal problem into the stochastic gradient framework
-        \item Introduce a budget for the maximum number of points with nonzero weight
-    \end{itemize}
+\begin{frame}{RNN Diagram}
+    \begin{figure}
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/RNN.png}
+    \caption{Recurrent Neural Network}
+    \label{fig:rnn}
+    Diagram of a vanilla recurrent neural network
+\end{figure}
 \end{frame}
-\begin{frame}{Scalable Support Vector Clustering}
-    \begin{enumerate}
-        \item Draw $X_i$ at random from $X$
-        \item Update the weights $\beta_j \leftarrow \frac{t-1}{t} \beta_j$
-        \item Check if $X_i$ is outside the cluster, i.e. if
-        \[
-            f(X_i) = 2 \sum_j \beta_j K(X_j, X_i) - R < 0
-        \]
-        \item If so, update $\beta_i \leftarrow \beta_i + 2 C R \eta_t$
-        \item If there are more than B nonzero $\beta_j$, set the smallest one to $0$
-    \end{enumerate}
-\end{frame}
-\section{Results}
-\begin{frame}{Two Moons}
-\includegraphics[width=\textwidth]{tm.png}
-\end{frame}
-\begin{frame}{KMeans}
-\includegraphics[width=\textwidth]{kmeans.png}
-\end{frame}
-\begin{frame}{Two Moons with SVC}
-\includegraphics[width=\textwidth]{img5.png}
-\end{frame}
-\begin{frame}{Two Moons Failure}
-\includegraphics[width=\textwidth]{img6.png}
-\end{frame}
-\begin{frame}{Two Moons Failure}
-\includegraphics[width=\textwidth]{img1.png}
-\end{frame}
-\begin{frame}{Two Moons Failure}
-\includegraphics[width=\textwidth]{img2.png}
-\end{frame}
-\begin{frame}{Two Moons Failure}
-\includegraphics[width=\textwidth]{wtf.png}
-\end{frame}
-\begin{frame}{Distorted Blobs}
-\includegraphics[width=\textwidth]{img3.png}
+
+\begin{frame}{Long Short-Term Memory}
+\begin{itemize}
+    \item Introduced in 1997\cite{LSTM}
+    \item Solves memory problem in RNNs by introducing memory traces across all sequence (an output independent of the classification)
+    \item Parameters determine how memory traces are forgotten and learned, as well as the more traditional uses from neural networks.
+\end{itemize}
+    
 \end{frame}
 %------------------------------------------------
+
 
 \begin{frame}
 \frametitle{References}
 \bibliographystyle{alpha}
-\bibliography{sample}
+\bibliography{refs}
 \end{frame}
 
 %------------------------------------------------
-
+\begin{frame}{Acknowledgements}
+\begin{itemize}
+    \item Faculty Advisors: Michael Mozer and Stephen Becker
+\item Continuing Work done by Denis Kazakov
+\item Funding Provided by National Science Foundations EXTREEMS Grant,   DMS 1407340 through Anne Dougherty.
+\end{itemize}
+\end{frame}
 \begin{frame}
 \begin{center}
 \includegraphics[width=0.6\textwidth]{SkoBuffs.jpg}
